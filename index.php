@@ -21,7 +21,18 @@ require_once('Immocaster/Sdk.php');
  */
 $sImmobilienScout24Key    = 'Key für ImmobilienScout24';
 $sImmobilienScout24Secret = 'Secret für ImmobilienScout24';
-$oImmocaster              = Immocaster_Sdk::getInstance('is24',$sImmobilienScout24Key,$sImmobilienScout24Secret);
+
+
+$is24Key            = $sImmobilienScout24Key != 'Key für ImmobilienScout24' ? $sImmobilienScout24Key : getenv('IS24_API_KEY');
+$is24Secret         = $sImmobilienScout24Secret != 'Secret für ImmobilienScout24' ? $sImmobilienScout24Secret : getenv('IS24_API_SECRET');
+
+$is24User           = getenv('IS24_USER') ? getenv('IS24_USER') : '';
+$oauthConsumerUrl   = getenv('IS24_CONSUMER_URL') ? getenv('IS24_CONSUMER_URL') : '';
+$exposeId           = isset($_REQUEST['exposeId']) ? $_REQUEST['exposeId'] : '';
+$dbDsn              = getenv('IS24_DB_DSN') ? getenv('IS24_DB_DSN') : '';
+
+
+$oImmocaster              = Immocaster_Sdk::getInstance('is24', $is24Key, $is24Secret);
 
 /**
  * Verbindung zur MySql-Datenbank (wird für einige Anfragen
@@ -32,7 +43,23 @@ $oImmocaster              = Immocaster_Sdk::getInstance('is24',$sImmobilienScout
  * @var string Tabellenname in der Datenbank für Immocaster (Default ist Immocaster_Storage)
  * @var boolean Aktivieren (true) und deaktivieren (false) der Session (Wird nur für Zertifizierung benötigt!)
  */
-// $oImmocaster->setDataStorage(array('mysql','DB-Host','DB-User','DB-Password','DB-Name'));
+
+if($dbDsn){
+
+    $parsedDsn = parse_url($dbDsn);
+
+    $storageConfig = array(
+        $parsedDsn['scheme'],
+        $parsedDsn['host'],
+        $parsedDsn['user'],
+        $parsedDsn['pass'],
+        trim($parsedDsn['path'],'/')
+    );
+
+    $oImmocaster->setDataStorage($storageConfig);
+
+}
+
 
 /**
  * JSON verwenden
@@ -56,7 +83,7 @@ $oImmocaster              = Immocaster_Sdk::getInstance('is24',$sImmobilienScout
  * ImmobilienScout24 extra freigeschaltet werden.
  * Standardmäßig wird auf der Sandbox gearbeitet!
  */
-// $oImmocaster->setRequestUrl('live');
+$oImmocaster->setRequestUrl('live');
 
 /**
  * Authentifizierung mit oder ohne MySQL Eintrag durchspielen
@@ -132,34 +159,57 @@ echo '<div class="codebox"><textarea>'.$res.'</textarea></div>';
 /**
  * Ergebnisliste mit allen Objekten eines Maklers abfragen.
  */
-echo '<h2>Komplette Ergebnisliste eines Maklers</h2><br/>Diese Funktion wurde auskommentiert, da der Benutzer hierfür die Applikation zertifizieren muss und die Berechtigung von IS24 für diese Funktion benötigt.<br/><br/>';
-//$aParameter = array('username'=>'USERNAME');
-//$res = $oImmocaster->fullUserSearch($aParameter);
-//echo '<div class="codebox"><textarea>'.$res.'</textarea></div>';
+echo '<h2>Komplette Ergebnisliste eines Maklers</h2>';
+
+if($is24User){
+    $aParameter = array('username'=>$is24User);
+    $res = $oImmocaster->fullUserSearch($aParameter);
+    echo '<div class="codebox"><textarea>'.$res.'</textarea></div>';
+}
+else{
+    echo '<br/>Diese Funktion wurde auskommentiert, da der Benutzer hierfür die Applikation zertifizieren muss und die Berechtigung von IS24 für diese Funktion benötigt.<br/><br/>';
+}
 
 /**
  * Expose über die ID auslesen.
  */
-echo '<h2>Expose per ID auslesen</h2><br/>Diese Funktion wurde auskommentiert, da dafür eine aktuelle ExposeID benötigt wird.<br/><br/>';
-//$aParameter = array('exposeid'=>'ID'); // Expose-ID hinterlegen
-//$res        = $oImmocaster->getExpose($aParameter);
-//echo '<div class="codebox"><textarea>'.$res.'</textarea></div>';
+echo '<h2>Expose per ID auslesen</h2>';
+
+if($exposeId){
+    $aParameter = array('exposeid'=>$exposeId); // Expose-ID hinterlegen
+    $res        = $oImmocaster->getExpose($aParameter);
+    echo '<div class="codebox"><textarea>'.$res.'</textarea></div>';
+}
+else{
+    echo '<br/>Diese Funktion wurde auskommentiert, da dafür eine aktuelle ExposeID benötigt wird.<br/><br/>';
+}
 
 /**
  * Impressum eines Exposes auslesen.
  */
-echo '<h2>Impressum eines Exposes auslesen</h2><br/>Diese Funktion wurde auskommentiert, da dafür eine aktuelle ExposeID benötigt wird.<br/><br/>';
-//$aParameter = array('exposeid'=>'ID'); // Expose-ID hinterlegen
-//$res        = $oImmocaster->getExposeImprint($aParameter);
-//echo '<div class="codebox"><textarea>'.$res.'</textarea></div>';
+echo '<h2>Impressum eines Exposes auslesen</h2>';
 
+if($exposeId){
+    $aParameter = array('exposeid'=>$exposeId); // Expose-ID hinterlegen
+    $res        = $oImmocaster->getExposeImprint($aParameter);
+    echo '<div class="codebox"><textarea>'.$res.'</textarea></div>';
+}
+else{
+    echo '<br/>Diese Funktion wurde auskommentiert, da dafür eine aktuelle ExposeID benötigt wird.<br/><br/>';
+}
 /**
  * Attachment auslesen.
  */
-echo '<h2>Attachment auslesen</h2><br/>Diese Funktion wurde auskommentiert, da dafür eine aktuelle ExposeID benötigt wird.<br/><br/>';
-//$aParameter = array('exposeid'=>'ID'); // Expose-ID hinterlegen
-//$res        = $oImmocaster->getAttachment($aParameter);
-//echo '<div class="codebox"><textarea>'.$res.'</textarea></div>';
+echo '<h2>Attachment auslesen</h2>';
+
+if($exposeId){
+    $aParameter = array('exposeid'=>$exposeId); // Expose-ID hinterlegen
+    $res        = $oImmocaster->getAttachment($aParameter);
+    echo '<div class="codebox"><textarea>'.$res.'</textarea></div>';
+}
+else{
+    echo '<br/>Diese Funktion wurde auskommentiert, da dafür eine aktuelle ExposeID benötigt wird.<br/><br/>';
+}
 
 /**
  * Applikation zertifizieren.
@@ -172,60 +222,82 @@ echo '<h2>Attachment auslesen</h2><br/>Diese Funktion wurde auskommentiert, da d
  *          Browser (z.B. Firefox) genommen werden.
  *
  */
-echo '<h2>Zertifizierung einer Applikation durch den Makler</h2><br/>Diese Funktion wurde auskommentiert!<br/><br/>';
-/*
-$sCertifyURL = 'http://MEINE-AKTUELLE-URL.DE'; // Komplette URL inkl. Parameter auf der das Script eingebunden wird
-if(isset($_GET['main_registration'])||isset($_GET['state']))
-{
-    if(isset($_POST['user'])){ $sUser=$_POST['user']; }
-    if(isset($_GET['user'])){ $sUser=$_GET['user']; }
-    $aParameter = array('callback_url'=>$sCertifyURL.'?user='.$sUser,'verifyApplication'=>true);
-    // Benutzer neu zertifizieren
-    $returnAuthentication = $oImmocaster->getAccess($aParameter);
-    if ($returnAuthentication === true)
-    {
-        echo '<div id="appVerifyInfo">Zertifizierung in der MySQL Datenbank war erfolgreich.</div>';
-    }
-    elseif (is_array($returnAuthentication) && count($returnAuthentication) > 1)
-    {
-        echo '<div id="appVerifyInfo">Zertifizierung war erfolgreich. Hier finden Sie Access Token und Token Secret kommasepariert und url enkodiert.</div>';
-        echo '<div class="codebox"><textarea>'.implode(",", $returnAuthentication).'</textarea></div>';
-    }
-    else
-    {
-        echo '<div id="appVerifyInfo">Es ist etwas schief gelaufen. Troubleshooting: Benutzer ist bereits in der MySQL Datenbank zertifiziert oder es besteht keine Verbindung zur Datenbank.</div>';
+echo '<h2>Zertifizierung einer Applikation durch den Makler</h2>';
 
+if($oauthConsumerUrl){
+
+    $sCertifyURL = $oauthConsumerUrl; // Komplette URL inkl. Parameter auf der das Script eingebunden wird
+
+    if(isset($_GET['main_registration'])||isset($_GET['state']))
+    {
+        if(isset($_POST['user'])){ $sUser=$_POST['user']; }
+        if(isset($_GET['user'])){ $sUser=$_GET['user']; }
+        $aParameter = array('callback_url'=>$sCertifyURL.'?user='.$sUser,'verifyApplication'=>true);
+        // Benutzer neu zertifizieren
+        $returnAuthentication = $oImmocaster->getAccess($aParameter);
+        if ($returnAuthentication === true)
+        {
+            echo '<div id="appVerifyInfo">Zertifizierung in der MySQL Datenbank war erfolgreich.</div>';
+        }
+        elseif (is_array($returnAuthentication) && count($returnAuthentication) > 1)
+        {
+            echo '<div id="appVerifyInfo">Zertifizierung war erfolgreich. Hier finden Sie Access Token und Token Secret kommasepariert und url enkodiert.</div>';
+            echo '<div class="codebox"><textarea>'.implode(",", $returnAuthentication).'</textarea></div>';
+        }
+        else
+        {
+            echo '<div id="appVerifyInfo">Es ist etwas schief gelaufen. Troubleshooting: Benutzer ist bereits in der MySQL Datenbank zertifiziert oder es besteht keine Verbindung zur Datenbank.</div>';
+
+        }
     }
+    echo '<form action="'.$sCertifyURL.'?main_registration=1" method="post"><div id="appVerifyButton"><strong>Hinweis: Unter IE9 kann es zu Problemen mit der Zertifizierung kommen.</strong><br />Benutzername: <input type="text" name="user" /><br /><em>Der Benutzername sollte nach Möglichkeit gesetzt werden. Standardmäßig wird ansonsten "me" genommen. Somit können aber nicht mehrere User parallel in der Datenbank abgelegt werden. Der gewählte Benutzernamen muss der gleiche wie im Formular auf der nächsten Seite sein, damit der Token richtig zugewiesen werden kann.</em><br /><input type="submit" value="Jetzt zertifizieren" /></div></form>';
+    echo '<p>Registrierte Nutzer in der Datenbank: ';
+    // Anzeige welche Nutzer bereits in der MySQL Datenbank registriert sind
+    print_r($oImmocaster->getAllApplicationUsers(array('string'=>true)));
 }
-echo '<form action="'.$sCertifyURL.'?main_registration=1" method="post"><div id="appVerifyButton"><strong>Hinweis: Unter IE9 kann es zu Problemen mit der Zertifizierung kommen.</strong><br />Benutzername: <input type="text" name="user" /><br /><em>Der Benutzername sollte nach Möglichkeit gesetzt werden. Standardmäßig wird ansonsten "me" genommen. Somit können aber nicht mehrere User parallel in der Datenbank abgelegt werden. Der gewählte Benutzernamen muss der gleiche wie im Formular auf der nächsten Seite sein, damit der Token richtig zugewiesen werden kann.</em><br /><input type="submit" value="Jetzt zertifizieren" /></div></form>';
-echo '<p>Registrierte Nutzer in der Datenbank: ';
-// Anzeige welche Nutzer bereits in der MySQL Datenbank registriert sind
-print_r($oImmocaster->getAllApplicationUsers(array('string'=>true)));
-*/
+else{
+    echo '<br/>Diese Funktion wurde auskommentiert!<br/><br/>';
+}
 
 /**
  * Anbieter-Logo auslesen
  */
-echo '<h2>Logo eines Maklers auslesen</h2><br/>Diese Funktion wurde auskommentiert, da dafür eine Zertifizierung nötig ist.<br/><br/>';
-//$aParameter = array('username'=>'USERNAME'); // Username hinterlegen (standardmäßig ihr Nutzername, der beim Login verwendet wird)
-//$res        = $oImmocaster->getLogo($aParameter);
-//echo '<div class="codebox"><textarea>'.$res.'</textarea></div>';
+echo '<h2>Logo eines Maklers auslesen</h2>';
 
+if($is24User){
+    $aParameter = array('username'=>$is24User); // Username hinterlegen (standardmäßig ihr Nutzername, der beim Login verwendet wird)
+    $res        = $oImmocaster->getLogo($aParameter);
+    echo '<div class="codebox"><textarea>'.$res.'</textarea></div>';
+}
+else{
+    echo '<br/>Diese Funktion wurde auskommentiert, da dafür eine Zertifizierung nötig ist.<br/><br/>';
+}
 /**
  * Ergebnisliste abfragen per Radius (eines einzelnen Kunden/Maklers).
  */
-echo '<h2>Ergebnisliste eines einzelnen Maklers per Radius abfragen</h2><br/>Diese Funktion wurde auskommentiert, da dafür eine Zertifizierung nötig ist.<br/><br/>';
-//$aParameter = array('geocoordinates'=>'52.52546480183439;13.369545936584473;1000','realestatetype'=>'apartmentrent','username'=>'Benutzername','channel'=>'is24 oder hp');
-//$res        = $oImmocaster->radiusSearch($aParameter);
-//echo '<div class="codebox"><textarea>'.$res.'</textarea></div>';
+echo '<h2>Ergebnisliste eines einzelnen Maklers per Radius abfragen</h2>';
 
+if($is24User){
+    $aParameter = array('geocoordinates'=>'52.52546480183439;13.369545936584473;1000','realestatetype'=>'apartmentrent','username'=>$is24User,'channel'=>'is24 oder hp');
+    $res        = $oImmocaster->radiusSearch($aParameter);
+    echo '<div class="codebox"><textarea>'.$res.'</textarea></div>';
+}
+else{
+    echo '<br/>Diese Funktion wurde auskommentiert, da dafür eine Zertifizierung nötig ist.<br/><br/>';
+}
 /**
  * Ergebnisliste abfragen per Region (eines einzelnen Kunden/Maklers).
  */
-echo '<h2>Ergebnisliste eines einzelnen Maklers per Region abfragen</h2><br/>Diese Funktion wurde auskommentiert, da dafür eine Zertifizierung nötig ist.<br/><br/>';
-//$aParameter = array('geocodes'=>1276003001017,'realestatetype'=>'apartmentrent','username'=>'Benutzername','channel'=>'is24 oder hp');
-//$res        = $oImmocaster->regionSearch($aParameter);
-//echo '<div class="codebox"><textarea>'.$res.'</textarea></div>';
+echo '<h2>Ergebnisliste eines einzelnen Maklers per Region abfragen</h2>';
+
+if($is24User){
+    $aParameter = array('geocodes'=>1276003001017,'realestatetype'=>'apartmentrent','username'=>$is24User,'channel'=>'is24 oder hp');
+    $res        = $oImmocaster->regionSearch($aParameter);
+    echo '<div class="codebox"><textarea>'.$res.'</textarea></div>';
+}
+else{
+    echo '<br/>Diese Funktion wurde auskommentiert, da dafür eine Zertifizierung nötig ist.<br/><br/>';
+}
 
 /**
  * Kontakt an Anbieter versenden.
@@ -286,10 +358,16 @@ echo '</form>';
 /**
  * Ermittelt die Kanäle (Channels) in die ein zertifizierter Benutzer Objekte exportieren darf
  */
-echo '<h2>Export-Channels für den User:</h2><br/>Diese Funktion wurde auskommentiert, da dafür eine Zertifizierung nötig ist.<br/><br/>';
-//$aParameter = array('username'=>'USERNAME'); // Benutzername ('me' ist hier nicht zulässig!)
-//$res        = $oImmocaster->getPublishChannel($aParameter);
-//echo '<div class="codebox"><textarea>'.$res.'</textarea></div>';
+echo '<h2>Export-Channels für den User:</h2>';
+
+if($is24User){
+    $aParameter = array('username'=>$is24User); // Benutzername ('me' ist hier nicht zulässig!)
+    $res        = $oImmocaster->getPublishChannel($aParameter);
+    echo '<div class="codebox"><textarea>'.$res.'</textarea></div>';
+}
+else{
+    echo '<br/>Diese Funktion wurde auskommentiert, da dafür eine Zertifizierung nötig ist.<br/><br/>';
+}
 
 /**
  * Objekt zu ImmobilienScout24 exportieren / Objekt ändern
