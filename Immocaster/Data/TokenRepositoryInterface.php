@@ -6,7 +6,7 @@ interface TokenRepositoryInterface{
      * Load and return the application token
      *
      * @param string $username
-     * @return string
+     * @return object
      **/
     public function getApplicationToken($username);
 

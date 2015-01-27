@@ -1,6 +1,7 @@
 <?php
 
 use Immocaster\Sdk2;
+use Immocaster\Data\JsonFileTokenRepository;
 
 /**
  * ImmobilienScout24 PHP-SDK
@@ -38,6 +39,8 @@ $exposeId           = isset($_REQUEST['exposeId']) ? $_REQUEST['exposeId'] : '';
 $dbDsn              = getenv('IS24_DB_DSN') ? getenv('IS24_DB_DSN') : '';
 $useLiveSite        = getenv('IS24_USE_LIVE') ? getenv('IS24_USE_LIVE') : false;
 
+$applicationToken   = getenv('IS24_APP_TOKEN') ? getenv('IS24_APP_TOKEN') : '';
+$applicationSecret  = getenv('IS24_APP_SECRET') ? getenv('IS24_APP_SECRET') : '';
 
 $oImmocaster              = Sdk2::getInstance('is24', $is24Key, $is24Secret);
 
@@ -55,18 +58,44 @@ if($dbDsn){
 
     $parsedDsn = parse_url($dbDsn);
 
-    require_once __DIR__.'/Immocaster/Data/Mysql.php';
 
+    // json://path/to/your/file (parse_url supports only 2 slashes after the scheme, more only on file)
+    if($parsedDsn['scheme'] == 'json'){
 
-    $storageConfig = array(
-        $parsedDsn['scheme'],
-        $parsedDsn['host'],
-        $parsedDsn['user'],
-        $parsedDsn['pass'],
-        trim($parsedDsn['path'],'/')
-    );
+        require_once __DIR__.'/Immocaster/Data/JsonFileTokenRepository.php';
 
-    $oImmocaster->setTokenRepository(new Immocaster_Data_Mysql($storageConfig));
+        $filePath = $parsedDsn['host'] . '/' . ltrim($parsedDsn['path'], '/');
+
+        if (strtoupper(substr(PHP_OS, 0, 3)) !== 'WIN') {
+            $filePath = "/$filePath";
+        }
+
+        $tokenRepository = new JsonFileTokenRepository($filePath);
+
+        if($applicationToken && $applicationSecret && $is24User){
+            $tokenRepository->setApplicationToken($applicationToken,
+                                                  $applicationSecret,
+                                                  $is24User);
+        }
+
+        $oImmocaster->setTokenRepository($tokenRepository);
+
+    }
+    else{
+
+        require_once __DIR__.'/Immocaster/Data/Mysql.php';
+
+        $storageConfig = array(
+            $parsedDsn['scheme'],
+            $parsedDsn['host'],
+            $parsedDsn['user'],
+            $parsedDsn['pass'],
+            trim($parsedDsn['path'],'/')
+        );
+
+        $oImmocaster->setTokenRepository(new Immocaster_Data_Mysql($storageConfig));
+
+    }
 
 }
 
