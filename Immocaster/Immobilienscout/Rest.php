@@ -1,4 +1,7 @@
 <?php
+
+use Immocaster\Data\TokenRepositoryInterface;
+
 session_start();
 /**
  * ImmobilienScout24 PHP-SDK
@@ -49,6 +52,13 @@ class Immocaster_Immobilienscout_Rest extends Immocaster_Immobilienscout
 	 * false: MySQL, true: Session
 	 */
 	 protected $_bAuthenticateWithoutDB = false;
+
+    /**
+     * The token repository, which loads and stores oAuth tokens
+     * 
+     * @var \Immocaster\Data\TokenRepositoryInterface
+     **/
+    protected $tokenRepository;
 
 	/**
      * Der Constructor legt die Einstellungen für die
@@ -195,6 +205,32 @@ class Immocaster_Immobilienscout_Rest extends Immocaster_Immobilienscout
 		return IMMOCASTER_SDK_LANG_FUNCTION_DONT_EXIST;
 	}
 
+    /**
+     * Returns the token loader/saver
+     *
+     * @return \Immocaster\Data\TokenRepositoryInterface
+     **/
+	public function getTokenRepository(){
+
+        if(!$this->tokenRepository){
+            throw new UnderflowException('Assign a TokenRepository such as Immocaster_Data_Mysql to support tokens');
+        }
+
+        return $this->tokenRepository;
+
+	}
+
+	/**
+	 * Sets the token loader/saver
+	 *
+	 * @param \Immocaster\Data\TokenRepositoryInterface $tokenRepository
+	 * @return static
+	 **/
+	public function setTokenRepository(TokenRepositoryInterface $tokenRepository){
+        $this->tokenRepository = $tokenRepository;
+        return $this;
+	}
+	
 	/**
      * Ausführen des REST Requests (aus den
 	 * jeweiligen Funktionen heraus).
@@ -1279,7 +1315,7 @@ class Immocaster_Immobilienscout_Rest extends Immocaster_Immobilienscout
 				$aResult = Immocaster_Tools_Helper::makeArrayFromString(parent::getContent($req));
 				// Wenn mit SQL Datenbank authentifiziert werden soll, speichere Reqeust Token und Secret in DB
 				if ($this->_bAuthenticateWithoutDB === false) {
-					Immocaster_Data_Mysql::getInstance()->saveRequestToken($aResult['oauth_token'],$aResult['oauth_token_secret']);
+					$this->getTokenRepository()->saveRequestToken($aResult['oauth_token'],$aResult['oauth_token_secret']);
 				}
 				// andernfalls speichere Request Token und Secret in Session
 				else {
@@ -1313,11 +1349,11 @@ class Immocaster_Immobilienscout_Rest extends Immocaster_Immobilienscout
 			// Wenn mit SQL Datenbank authentifiziert werden soll, hole Reqeust Token und Secret aus DB
 			if ($this->_bAuthenticateWithoutDB === false)
 			{
-				if(Immocaster_Data_Mysql::getInstance()->getApplicationToken($sUser))
+				if($this->getTokenRepository()->getApplicationToken($sUser))
 				{
 					return false;
 				}
-				$oToken = Immocaster_Data_Mysql::getInstance()->getRequestTokenWithoutSession();
+				$oToken = $this->getTokenRepository()->getRequestTokenWithoutSession();
 				$sToken = $oToken->ic_key;
 				$sSecret = $oToken->ic_secret;
 			}
@@ -1361,7 +1397,7 @@ class Immocaster_Immobilienscout_Rest extends Immocaster_Immobilienscout
 			}
 			$aAccessToken = Immocaster_Tools_Helper::makeArrayFromString($result);
 			if ($this->_bAuthenticateWithoutDB === false) {
-				if(Immocaster_Data_Mysql::getInstance()->saveApplicationToken(
+				if($this->getTokenRepository()->saveApplicationToken(
 					$aAccessToken['oauth_token'],
 					$aAccessToken['oauth_token_secret'],
 					$sUser
@@ -1388,7 +1424,8 @@ class Immocaster_Immobilienscout_Rest extends Immocaster_Immobilienscout
 	{
 		$oToken = NULL;
 		$sSecret = NULL;
-		if(class_exists('Immocaster_Data_Mysql') && $oData = Immocaster_Data_Mysql::getInstance()->getApplicationToken($sUser))
+
+		if($oData = $this->getTokenRepository()->getApplicationToken($sUser))
 		{
 			if($oData->ic_key!='')
 			{
@@ -1415,23 +1452,22 @@ class Immocaster_Immobilienscout_Rest extends Immocaster_Immobilienscout
 	public function _getAllApplicationUsers($aArgs)
 	{
 		$aUsers = array();
-		if(class_exists('Immocaster_Data_Mysql'))
-		{
-			$aUsers = Immocaster_Data_Mysql::getInstance()->getAllApplicationUsers();
-			// Rückgabe als String (kommagetrennt)
-			if(isset($aArgs['string']))
-			{
-				$sReturn = '';
-				$iUserAmount = count($aUsers);
-				$iCountUser = 1;
-				foreach($aUsers as $sUser)
-				{
-					$sReturn .= $sUser;
-					if($iCountUser<$iUserAmount){ $sReturn .= ', '; $iCountUser++; }
-				}
-				return $sReturn;
-			}
-		}
+
+        $aUsers = $this->getTokenRepository()->getAllApplicationUsers();
+        // Rückgabe als String (kommagetrennt)
+        if(isset($aArgs['string']))
+        {
+            $sReturn = '';
+            $iUserAmount = count($aUsers);
+            $iCountUser = 1;
+            foreach($aUsers as $sUser)
+            {
+                $sReturn .= $sUser;
+                if($iCountUser<$iUserAmount){ $sReturn .= ', '; $iCountUser++; }
+            }
+            return $sReturn;
+        }
+
 		// Rückgabe als Array
 		return $aUsers;
 	}

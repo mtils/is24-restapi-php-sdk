@@ -1,5 +1,7 @@
 <?php
 
+use Immocaster\Data\TokenRepositoryInterface;
+
 /**
  * Immocaster SDK
  * Datenspeicherung per Mysql(Datenbank)
@@ -10,7 +12,7 @@
  * @link       http://www.immobilienscout24.de
  */
 
-class Immocaster_Data_Mysql
+class Immocaster_Data_Mysql implements TokenRepositoryInterface
 {
 
 	/**

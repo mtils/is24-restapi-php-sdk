@@ -1,5 +1,7 @@
 <?php
 
+use Immocaster\Sdk2;
+
 /**
  * ImmobilienScout24 PHP-SDK
  * Beispiele für die Nutzung des ImmobilienScout24 PHP-SDK.
@@ -12,7 +14,7 @@
 /**
  * SDK laden.
  */
-require_once('Immocaster/Sdk.php');
+require_once('Immocaster/Sdk2.php');
 
 if(file_exists(__DIR__.'/is24_access.php')){
     include_once(__DIR__.'/is24_access.php');
@@ -37,7 +39,7 @@ $dbDsn              = getenv('IS24_DB_DSN') ? getenv('IS24_DB_DSN') : '';
 $useLiveSite        = getenv('IS24_USE_LIVE') ? getenv('IS24_USE_LIVE') : false;
 
 
-$oImmocaster              = Immocaster_Sdk::getInstance('is24', $is24Key, $is24Secret);
+$oImmocaster              = Sdk2::getInstance('is24', $is24Key, $is24Secret);
 
 /**
  * Verbindung zur MySql-Datenbank (wird für einige Anfragen
@@ -53,6 +55,9 @@ if($dbDsn){
 
     $parsedDsn = parse_url($dbDsn);
 
+    require_once __DIR__.'/Immocaster/Data/Mysql.php';
+
+
     $storageConfig = array(
         $parsedDsn['scheme'],
         $parsedDsn['host'],
@@ -61,7 +66,7 @@ if($dbDsn){
         trim($parsedDsn['path'],'/')
     );
 
-    $oImmocaster->setDataStorage($storageConfig);
+    $oImmocaster->setTokenRepository(new Immocaster_Data_Mysql($storageConfig));
 
 }
 
