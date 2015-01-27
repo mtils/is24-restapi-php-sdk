@@ -14,6 +14,10 @@
  */
 require_once('Immocaster/Sdk.php');
 
+if(file_exists(__DIR__.'/is24_access.php')){
+    include_once(__DIR__.'/is24_access.php');
+}
+
 /**
  * Verbindung zum Service von ImmobilienScout24 aufbauen.
  * Die Daten (Key und Secret) erhält man auf
@@ -30,6 +34,7 @@ $is24User           = getenv('IS24_USER') ? getenv('IS24_USER') : '';
 $oauthConsumerUrl   = getenv('IS24_CONSUMER_URL') ? getenv('IS24_CONSUMER_URL') : '';
 $exposeId           = isset($_REQUEST['exposeId']) ? $_REQUEST['exposeId'] : '';
 $dbDsn              = getenv('IS24_DB_DSN') ? getenv('IS24_DB_DSN') : '';
+$useLiveSite        = getenv('IS24_USE_LIVE') ? getenv('IS24_USE_LIVE') : false;
 
 
 $oImmocaster              = Immocaster_Sdk::getInstance('is24', $is24Key, $is24Secret);
@@ -83,7 +88,9 @@ if($dbDsn){
  * ImmobilienScout24 extra freigeschaltet werden.
  * Standardmäßig wird auf der Sandbox gearbeitet!
  */
-$oImmocaster->setRequestUrl('live');
+if($useLiveSite){
+    $oImmocaster->setRequestUrl('live');
+}
 
 /**
  * Authentifizierung mit oder ohne MySQL Eintrag durchspielen
