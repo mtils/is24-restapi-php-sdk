@@ -126,7 +126,7 @@ class JsonFileTokenRepository implements TokenRepositoryInterface{
 
         $data = $this->getFileData();
 
-        $requestKeys = [];
+        $requestKeys = array();
 
         foreach($data as $arrayKey=>$value){
             if($this->isRequestArrayKey($arrayKey)){
