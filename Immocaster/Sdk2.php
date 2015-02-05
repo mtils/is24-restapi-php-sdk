@@ -40,6 +40,10 @@ class Sdk2 extends Immocaster_Sdk{
     {
         if(!isset(self::$instances[$sName]))
         {
+            // session start does not work in console environments
+            if(!is_writable(ini_get('session.save_path'))){
+                ini_set('session.save_path', sys_get_temp_dir());
+            }
             self::$instances[$sName] = new static($sKey,$sSecret,$sService,$sAuth,$sProtocol);
         }
         return self::$instances[$sName];

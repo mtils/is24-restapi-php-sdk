@@ -215,6 +215,9 @@ class JsonFileTokenRepository implements TokenRepositoryInterface{
     protected function getFileData(){
 
         if(!$this->fileData){
+            if(!file_exists($this->getFilePath())){
+                file_put_contents($this->getFilePath(),'');
+            }
             $json = file_get_contents($this->getFilePath());
             $this->fileData = json_decode($json);
         }
